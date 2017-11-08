@@ -120,6 +120,7 @@ Copyright (c) 2011 by Harvest
 	  {
 		  this.pageSize=pageSizeSetting;
 	  }
+      this.createDataSourceMap();
       this.setCurrentPage();
       this.set_default_text();
       this.set_default_values();
@@ -131,7 +132,6 @@ Copyright (c) 2011 by Harvest
     //create current set of option which contains selected option
     AbstractChosen.prototype.setCurrentPage=function()
     {
-        this.createDataSourceMap();
 		var selectedOptionsOnUI = $(this.form_field).val();
     	if(this.is_multiple)
     	{
@@ -173,6 +173,10 @@ Copyright (c) 2011 by Harvest
         	{
         		max=options.length;
         	}
+    	}
+    	if((options.length-max)<pageSize)
+    	{
+    		max=options.length;
     	}
 		for(var i=pageStart;i<max;i++)
 		{
@@ -437,6 +441,10 @@ Copyright (c) 2011 by Harvest
         container_classes.push("chzn-rtl");
       }
       this.f_width = this.form_field_jq.outerWidth();
+      if(typeof this.form_field_jq.actual =="function")
+      {
+    	  this.f_width = this.form_field_jq.actual('outerWidth');
+      }
       container_props = {
         id: this.container_id,
         "class": container_classes.join(' '),
@@ -515,11 +523,20 @@ Copyright (c) 2011 by Harvest
 	   	      if(direction=='back' && (_this.is_multiple || $(_this.form_field).val()==null || searchText!=''))
 	   	      {
 	   	    	 return;
-	   	       }
+	   	      }
+	   	      else if(!_this.is_multiple && direction=='forward' && searchText=='' && $(_this.form_field).val()!=null )
+	   	      {
+	   	    	  var selectedIndex=_this.dataSourceMap[$(_this.form_field).val()].index;
+	   	    	  if(($(_this.form_field).find("option").length-selectedIndex) < _this.pageSize)
+	   	    	  {
+	   	    		  return;
+	   	    	  }
+	   	      }
 	   	      _this.search_and_generate_options(orgSearchText,regex,"loadMore",direction);
 		  }
         });      
       this.form_field_jq.bind("liszt:updated", function(evt) {
+          _this.createDataSourceMap();
     	  _this.setCurrentPage();
         return _this.results_update_field(evt);
       });
@@ -895,6 +912,14 @@ Copyright (c) 2011 by Harvest
 
     Chosen.prototype.result_select = function(evt) {
       var high, high_id, item, position;
+      if (this.is_multiple && this.max_selected_options <= this.choices) {
+          this.form_field_jq.trigger("liszt:maxselected", {
+            chosen: this
+          });
+          this.results_hide();
+          this.search_field.val("");
+          return false;
+      }
       if (this.result_highlight) {
         high = this.result_highlight;
         high_id = high.attr("id");
@@ -1245,20 +1270,23 @@ Copyright (c) 2011 by Harvest
       	options={'clear_field':'no'};
       }
       this.results_update_field(options);
-      if(operation=="loadMore" && highLightedId!=null)
+      if(this.is_multiple && operation=="loadMore" && highLightedId!=null)
       {
     	  this.result_do_highlight($("#"+highLightedId));  
       }
       if(direction=="back")
       {
-    	  this.result_do_highlight(this.search_results.find(".result-selected.active-result"));
-/*    	  var resultUl=this.search_results[0];  
-    	  if(resultUl==null || resultUl.scrollHeight==null)
+    	  var resultUl=this.search_results[0];  
+    	  if(resultUl!=null && resultUl.scrollHeight!=null)
     	  {
-    		 return;
+        	  var scrollTop=resultUl.scrollHeight-(resultUl.scrollHeight/4);
+        	  if(scrollTop>10)
+        	  {
+        		  scrollTop=10;  
+        	  }
+        	  resultUl.scrollTop=scrollTop;
     	  }
-    	  resultUl.scrollTop=resultUl.scrollHeight/4;
-*/       }
+       }
     }
     
     Chosen.prototype.addOptionsForSelect=function(searchText,regex,operation,direction)
@@ -1275,11 +1303,15 @@ Copyright (c) 2011 by Harvest
     	  var searchStartIndex=0;
     	  if(isBack)
     	  {
-    		  searchStartIndex=$(this.form_field).find("option:selected").index();
+    		  searchStartIndex=this.dataSourceMap[selectedOptionsOnUI].index;
     		  if(searchStartIndex<pageSize || searchStartIndex<optionsCount)
     		  {
     			  return false;
     		  }
+    	  }
+    	  else if(operation=="loadMore" && selectedOptionsOnUI!=null && searchText=="" )
+    	  {
+    		  searchStartIndex=this.dataSourceMap[selectedOptionsOnUI].index;
     	  }
 	      $(this.field_for_search).find("option").remove();
     	  if(operation!="loadMore" && searchText=="" && selectedOptionsOnUI!=null)
@@ -1289,7 +1321,15 @@ Copyright (c) 2011 by Harvest
     	  }
     	  else
     	  {
+    		    if(operation!="loadMore")
+    		    {
+    			   $(this.form_field).val("");  
+    		    }  
 				this.searchInDataSourceAndCreateOption(regex,maxResult,searchStartIndex,isBack);
+    		    if(operation=="loadMore")
+    		    {
+    			   $(this.field_for_search).val($(this.form_field).val());
+    		    }  				
     	  }
     	  return true;
     }
@@ -1350,7 +1390,7 @@ Copyright (c) 2011 by Harvest
         var originalOptionValueMap = $(this.form_field).data("optionsValuesMap");
 	    var selectedOptionsMap={};
 	    $(this.field_for_search).find("option").remove();
-		if(selectedOptionsOnUI.length>0)
+		if(selectedOptionsOnUI!=null && selectedOptionsOnUI.length>0)
 		{
      	    var selectElm=this.field_for_search;
      	    var dsMap=this.dataSourceMap;
@@ -1371,12 +1411,13 @@ Copyright (c) 2011 by Harvest
     	var foundCount=0;
     	var options=$(this.form_field).find("option");
         for(var i=0;i<options.length;i++){
-            var optionValue=options[i].text;
+            var optionText=options[i].text;
+            var optionValue=options[i].value;
             if(selectedOptionsMap[optionValue]!=null)
       	    {
       		   continue;  
       	    }
-  		    if(this.is_matching(regex,optionValue)) 
+  		    if(this.is_matching(regex,optionText)) 
   		    {
   		    	this.addSelectOption(options[i],false);
   		    	foundCount++
@@ -1388,15 +1429,15 @@ Copyright (c) 2011 by Harvest
         }
         return foundCount;
     }
-    Chosen.prototype.is_matching=function(regex,optionValue)
+    Chosen.prototype.is_matching=function(regex,optionText)
     {
     	var found=false;
-		if(regex.test(optionValue))
+		if(regex.test(optionText))
 		{
 			found=true;
 		}
-		else if (optionValue.indexOf(" ") >= 0 ) {
-          var parts = optionValue.replace(/\[|\]/g, "").split(" ");
+		else if (optionText.indexOf(" ") >= 0 ) {
+          var parts = optionText.replace(/\[|\]/g, "").split(" ");
           if (parts.length) {
             for (var j = 0;j< parts.length; j++) {
               part = parts[j];

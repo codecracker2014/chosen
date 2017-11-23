@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chosen Test</title>
+<link rel="stylesheet" href="../css/chosen.min.css"  media='screen, print' />
+<script src="../../../jquery/jquery.min.js?jsVersion="></script>
+ <script src="../js/chosen.jquery.js?jsVersion="></script>
+<!--<script src="../js/chosen.jquery.original_file.js?jsVersion="></script>-->
+
+<script>
+i=0;
+$(document).ready(function(){
+	$("select").chosen();
+	setTimeout(runTestCases,2000)
+
+})
+function runTestCases()
+{
+	console.log("Running test cases");
+	testCase1()
+
+}
+//Test if same value selected after search change event should not get fired
+function testCase1()
+{
+
+	$("#test").val(43);
+	$("#test").trigger("liszt:updated");
+	if($("#test").val()!="43")
+	{
+		$("#test1").html("<h4>Test case 1:Failed</h4>");
+	}
+	else
+	{
+
+		$("#test1").data("updateInchange",0);
+		$("#test_chzn").trigger("mousedown");
+		$("#test_chzn").find("input").val("HYUYUHUEH");
+		$("#test_chzn").find("input").trigger("keyup");
+		setTimeout(function(){
+		
+		var e = $.Event( "keyup", { which: 13 } );
+		$("#test_chzn").find("input").trigger(e);
+		
+		setTimeout(function(){
+			var updateInchange=$("#test1").data("updateInchange");
+			if(updateInchange!=0)
+			{
+				console.log("Test case 1 failed");
+				$("#test1").html("<h4>Test case 1:Failed</h4>");
+				$("#test1").data("updateInchange",0);
+			}
+			else{
+				$("#test1").html("<h4>Test case 1:Success</h4>");
+				$("#test1").data("updateInchange",0);
+			}
+		},1000)
+		
+		},2000);
+	}
+}
+$(document).on('change', '#test', function() {
+	console.log("Value changed"+i);
+	var updateInchange=$("#test1").data("updateInchange");
+	if(updateInchange==null)
+	{
+		updateInchange=0;
+	}
+	updateInchange++;
+	$("#test1").data("updateInchange",updateInchange);
+	i++;
+});
+</script>
+</head>
+<body>
+Select With Chosen
+<select id="test" style="margin-left:100px;margin-top:100px;width:200px">
+	<option ></option>
+	<option value="1" >A</option>
+	<option value="2" >B</option>
+	<option value="3" >C</option>
+	<option value="4" >D</option>
+	<option value="5" >E</option>
+	<option value="6" >F</option>
+	<option value="7" >G</option>
+	<option value="8" >H</option>
+	<option value="9" >BU</option>
+	<option value="10" >Bds</option>
+	<option value="11" >Bsd</option>
+	<option value="12" >Bfde</option>
+	<option value="13" >Befu</option>
+	<option value="14" >Bdfe</option>
+	<option value="15" >Bqwwe</option>
+	<option value="16" >Bkun</option>
+	<option value="17" >Biub</option>
+	<option value="18" >Bkie</option>
+	<option value="19" >Bpos</option>
+	<option value="20" >ghs</option>
+	<option value="21" >ken</option>
+	<option value="22" >sfseB</option>
+	<option value="23" >unjs</option>
+	<option value="24" >sdjjh</option>
+	<option value="25" >uinsd</option>
+	<option value="26" >iunw</option>
+	<option value="27" >ccsdsd</option>
+	<option value="28" >yywe</option>
+	<option value="29" >qeqe</option>
+	<option value="30" >jmsd</option>
+	<option value="33" >opwi</option>
+	<option value="34" >Bppow</option>
+	<option value="35" >njjye</option>
+	<option value="36" >AHJHJKKJ</option>
+	<option value="37" >Bsdewwew</option>
+	<option value="38" >CKIJKMK</option>
+	<option value="39" >DWHIJJ</option>
+	<option value="40" >EJKJIJI</option>
+	<option value="41" >FNNKJJKE</option>
+	<option value="42" >BJHHJsG</option>
+	<option value="43" >HYUYUHUEH</option>
+	<option value="44" >BUBHUHUHU</option>
+	<option value="45" >BdsBYGYUYUW</option>
+	<option value="46" >BsdTYGBE</option>
+	<option value="47" >BfdeHJHJH</option>
+	<option value="48" >BefuHJHJHJHEE</option>
+	<option value="49" >BdfeHHHEHE</option>
+	<option value="50" >BqwweGGHJJHE</option>
+	<option value="51" >BkunUURYBBS</option>
+	<option value="52" >BiubYB BGSH</option>
+	<option value="53" >BkieN sdsds</option>
+	<option value="54" >BposKJKJKJKJ</option>
+	<option value="55" >ghsJHJHJHJH</option>
+</select>
+
+<div>
+	Test cases result
+	<ul>
+		<li >Test: if user select same value after search change event should not get fired<br><div id="test1"></div></li>
+	</ul>
+</div>
+
+</body>
+</html>

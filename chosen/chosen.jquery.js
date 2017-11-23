@@ -182,7 +182,13 @@ Copyright (c) 2011 by Harvest
 		{
 			this.addSelectOption(options[i],false);
 		}
-		$(this.field_for_search).val(selectedOptionsOnUI);
+		if(selectedOptionsOnUI==null)
+		{
+			$(this.field_for_search).prop("selectedIndex",-1);
+		}
+		else{
+			$(this.field_for_search).val(selectedOptionsOnUI);
+		}
 		
     }
     AbstractChosen.prototype.createDataSourceMap=function()
@@ -1321,17 +1327,30 @@ Copyright (c) 2011 by Harvest
     	  }
     	  else
     	  {
-    		    if(operation!="loadMore")
-    		    {
-    			   $(this.form_field).val("");  
-    		    }  
 				this.searchInDataSourceAndCreateOption(regex,maxResult,searchStartIndex,isBack);
     		    if(operation=="loadMore")
     		    {
     			   $(this.field_for_search).val($(this.form_field).val());
-    		    }  				
+    		    }
+    		    else if(selectedOptionsOnUI!=null)
+    		    {
+    		    	this.addSelectedOptionForSelect();
+    		   	}
     	  }
     	  return true;
+    }
+    Chosen.prototype.addSelectedOptionForSelect=function()
+    {
+    	var selectedOptionsOnUI=$(this.form_field).val();
+    	$(this.field_for_search).prop("selectedIndex",-1);
+    	$(this.field_for_search).val(selectedOptionsOnUI);
+    	if($(this.field_for_search).val()==null)
+    	{
+    		var optionIndex=this.dataSourceMap[selectedOptionsOnUI].index;
+    		var options=$(this.form_field).find("option");
+    		this.addSelectOption(options[optionIndex],false);
+    	}
+    	$(this.field_for_search).val(selectedOptionsOnUI);
     }
     //For select 
     Chosen.prototype.searchInDataSourceAndCreateOption=function(regex,maxResult,searchStartIndex,isBack)
